@@ -37,7 +37,7 @@ export default function LectureFinderApp() {
       localStorage.setItem('auth_token', data.access_token);
       setLoginId('');
       setLoginPassword('');
-      setDataLoaded(true);
+      setDataLoaded(false);
     } catch (err) {
       setLoginError(err.message);
     }
