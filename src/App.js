@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, Filter, X, AlertCircle, LogOut, Users } from 'lucide-react';
 
 export default function LectureFinderApp() {
@@ -16,8 +16,6 @@ export default function LectureFinderApp() {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [dataLoaded, setDataLoaded] = useState(false);
-  const [dataError, setDataError] = useState('');
 
   const API_BASE_URL = 'https://NZE77-cokefinder.hf.space';
 
