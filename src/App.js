@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, Filter, X, AlertCircle, LogOut, Users } from 'lucide-react';
 
 export default function LectureFinderApp() {
-  const [token, setToken] = useState(localStorage.getItem('auth_token') || null);
+  const [token, setToken] = useState(null);
   const [loginId, setLoginId] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -34,10 +34,8 @@ export default function LectureFinderApp() {
       if (!response.ok) throw new Error('Invalid credentials');
       const data = await response.json();
       setToken(data.access_token);
-      localStorage.setItem('auth_token', data.access_token);
       setLoginId('');
       setLoginPassword('');
-      setDataLoaded(false);
     } catch (err) {
       setLoginError(err.message);
     }
@@ -46,10 +44,13 @@ export default function LectureFinderApp() {
 
   const handleLogout = () => {
     setToken(null);
-    localStorage.removeItem('auth_token');
-    setDataLoaded(false);
     setResults([]);
     setSearched(false);
+    setMinStudents('');
+    setErpId('');
+    setName('');
+    setStatus('');
+    setError('');
   };
 
   const handleSearch = async () => {
@@ -117,6 +118,7 @@ export default function LectureFinderApp() {
                       onChange={(e) => setLoginId(e.target.value)}
                       placeholder="Enter admin ID"
                       className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                      required
                     />
                   </div>
                   <div>
@@ -127,9 +129,15 @@ export default function LectureFinderApp() {
                       onChange={(e) => setLoginPassword(e.target.value)}
                       placeholder="Enter password"
                       className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                      required
                     />
                   </div>
-                  {loginError && <p className="text-red-400 text-sm">{loginError}</p>}
+                  {loginError && (
+                    <div className="bg-red-900/30 border border-red-700/50 rounded-lg p-3 flex items-start gap-2">
+                      <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={18} />
+                      <p className="text-red-300 text-sm">{loginError}</p>
+                    </div>
+                  )}
                   <button
                     type="submit"
                     disabled={loginLoading}
