@@ -19,7 +19,7 @@ export default function LectureFinderApp() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [dataError, setDataError] = useState('');
 
-  const API_BASE_URL = 'http://localhost:8000';
+  const API_BASE_URL = 'https://NZE77-cokefinder.hf.space';
 
   const handleLogin = async (e) => {
     e.preventDefault();
