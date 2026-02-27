@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, X, AlertCircle, LogOut, Users } from 'lucide-react';
+import { Search, Filter, X, AlertCircle, LogOut, Users, Copy, Check } from 'lucide-react';
 
 export default function LectureFinderApp() {
   const [token, setToken] = useState(null);
@@ -7,7 +7,7 @@ export default function LectureFinderApp() {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
-  
+
   const [minStudents, setMinStudents] = useState('');
   const [erpId, setErpId] = useState('');
   const [name, setName] = useState('');
@@ -16,6 +16,15 @@ export default function LectureFinderApp() {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [copiedId, setCopiedId] = useState(null);
+
+  const handleCopyLink = (lectureId) => {
+    const link = `http://erp.tcetmumbai.in/TimeTable/Test/AttendanceStudListRegularNew.aspx?subid=11068&sec=AIML-B&subjt=BAI(THEORY)PCC%20-%20AIML403&Time=08:30%20AM%C2%B5TO%C2%B509:30%20AM%C2%B5%C2%B5(1)%C2%B5%C2%B5[REGULAR]%20(ALL)&applno=1&sectid=276&perdsqno=1&perdType=REGULAR&BatchdeId=8942&exttid=0&seqno=1023054&seqnointer=1013555&Date=04/02/2026&periodstatus=NOTMARKED&tdsplanID=39787&SEMESTERMSTID=4&STUMRKLOCKID=${lectureId}&STATUS=PERIOD_TAKEN&Remark=&Centrecode=TENGG_SC&SUB_STATUS=&ATTEND_LOCK=N&DATE_QUESTR=`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiedId(lectureId);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
 
   const API_BASE_URL = 'https://NZE77-cokefinder.hf.space';
 
@@ -163,8 +172,8 @@ export default function LectureFinderApp() {
             <h1 className="text-5xl font-bold text-white mb-3">Lecture Finder</h1>
             <p className="text-slate-400 text-lg">Search and manage lectures</p>
           </div>
-          <button 
-            onClick={handleLogout} 
+          <button
+            onClick={handleLogout}
             className="flex items-center gap-2 px-4 py-2 bg-red-900/30 hover:bg-red-900/50 border border-red-700/50 text-red-300 rounded-lg transition"
           >
             <LogOut size={18} /> Logout
@@ -177,7 +186,7 @@ export default function LectureFinderApp() {
             <Filter className="text-blue-400" size={24} />
             <h2 className="text-xl font-semibold text-white">Search Lectures</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Min. Students</label>
@@ -262,10 +271,23 @@ export default function LectureFinderApp() {
             ) : (
               <div className="space-y-6">
                 {results.map((lecture) => (
-                  <div key={lecture.lecture_id} className="bg-slate-700 border border-slate-600 rounded-lg p-6 hover:border-blue-500/50 transition">
-                    <h4 className="text-lg font-semibold text-blue-400 mb-2">Lecture ID: {lecture.lecture_id}</h4>
+                  <div key={lecture.strmlkid || lecture.lecture_id} className="bg-slate-700 border border-slate-600 rounded-lg p-6 hover:border-blue-500/50 transition">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="text-lg font-semibold text-blue-400">Lecture ID: {lecture.strmlkid || lecture.lecture_id}</h4>
+                      <button
+                        onClick={() => handleCopyLink(lecture.strmlkid || lecture.lecture_id)}
+                        className="p-1.5 bg-slate-800 hover:bg-slate-600 rounded-md transition border border-slate-600"
+                        title="Copy Link"
+                      >
+                        {copiedId === (lecture.strmlkid || lecture.lecture_id) ? (
+                          <Check size={16} className="text-green-400" />
+                        ) : (
+                          <Copy size={16} className="text-slate-400 hover:text-white" />
+                        )}
+                      </button>
+                    </div>
                     <p className="text-slate-300 text-sm"><span className="text-slate-400">Total Students:</span> {lecture.total_students}</p>
-                    
+
                     {lecture.remark && (
                       <p className="text-slate-300 text-sm mt-2">
                         <span className="text-slate-400">Remark:</span> <span className="text-yellow-400">{lecture.remark}</span>
