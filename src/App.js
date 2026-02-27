@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, X, AlertCircle, LogOut, Users, Copy, Check, Menu, Contact, Edit2, Sun, Moon, Trash2 } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 import './App.css';
 
-/* ── Dark / Light Mode Toggle Component ── */
+// Initialize Supabase Client
+// Replace anon_key with your Supabase Anon Key from Settings -> API
+const supabaseUrl = 'https://mfvegfwlqpjwtlcoebgz.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mdmVnZndscXBqd3RsY29lYmd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMTU5MDAsImV4cCI6MjA4Nzc5MTkwMH0.KTaX3IvkiIwYLpR7L3fqyVj36-UMudO4DwPvj2tdbN8';
+const supabase = createClient(supabaseUrl, supabaseKey);/* ── Dark / Light Mode Toggle Component ── */
 function ModeToggle({ dark, onToggle }) {
   return (
     <button className="mode-toggle" onClick={onToggle} title={dark ? 'Switch to Light' : 'Switch to Dark'}>
@@ -73,10 +78,9 @@ export default function LectureFinderApp() {
   const fetchIdPass = async () => {
     setDbLoading(true); setDbError('');
     try {
-      const res = await fetch(`${API_BASE_URL}/id_pass`, { headers: { 'Authorization': `Bearer ${token}` } });
-      if (!res.ok) throw new Error('Failed to fetch ID Pass list');
-      const data = await res.json();
-      setIdPassList(data.data || []);
+      const { data, error } = await supabase.from('id_pass').select('*');
+      if (error) throw error;
+      setIdPassList(data || []);
     } catch (err) { setDbError(err.message); }
     setDbLoading(false);
   };
@@ -84,13 +88,19 @@ export default function LectureFinderApp() {
   const handleSaveIdPass = async (e) => {
     e.preventDefault(); setDbLoading(true); setDbError('');
     try {
-      const url = isEditingDb ? `${API_BASE_URL}/id_pass/${originalEditId}` : `${API_BASE_URL}/id_pass`;
-      const res = await fetch(url, {
-        method: isEditingDb ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(idPassForm)
-      });
-      if (!res.ok) throw new Error('Failed to save record. ID might already exist.');
+      if (isEditingDb) {
+        const { error } = await supabase
+          .from('id_pass')
+          .update({ id: idPassForm.id, name: idPassForm.name, branches: idPassForm.branches })
+          .eq('id', originalEditId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('id_pass')
+          .insert([{ id: idPassForm.id, name: idPassForm.name, branches: idPassForm.branches }]);
+        if (error) throw error;
+      }
+
       setIdPassForm({ id: '', name: '', branches: '' });
       setIsEditingDb(false); setOriginalEditId(null); setShowIdPassForm(false);
       fetchIdPass();
@@ -105,11 +115,11 @@ export default function LectureFinderApp() {
     if (!window.confirm(`Are you sure you want to delete the record for ID: ${id}?`)) return;
     setDbLoading(true); setDbError('');
     try {
-      const res = await fetch(`${API_BASE_URL}/id_pass/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Failed to delete record.');
+      const { error } = await supabase
+        .from('id_pass')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
 
       cancelEdit();
       fetchIdPass();
