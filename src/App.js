@@ -65,8 +65,6 @@ export default function LectureFinderApp() {
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
   const [newBranchInput, setNewBranchInput] = useState('');
 
-  const API_BASE_URL = 'https://NZE77-cokefinder1.hf.space';
-
   const availableBranches = React.useMemo(() => {
     const branches = new Set();
     idPassList.forEach(item => {
@@ -148,13 +146,12 @@ export default function LectureFinderApp() {
   const handleLogin = async (e) => {
     e.preventDefault(); setLoginError(''); setLoginLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/login`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: loginId, password: loginPassword })
-      });
-      if (!res.ok) throw new Error('Invalid credentials');
-      const data = await res.json();
-      setToken(data.access_token); setLoginId(''); setLoginPassword('');
+      // Hardcoded login bypasses the old Hugging Face backend entirely
+      if (loginId !== 'admin' || loginPassword !== '#7Attendance') {
+        throw new Error('Invalid credentials');
+      }
+      setToken('logged_in'); // Any truthy local token un-hides the UI
+      setLoginId(''); setLoginPassword('');
     } catch (err) { setLoginError(err.message); }
     setLoginLoading(false);
   };
@@ -168,17 +165,39 @@ export default function LectureFinderApp() {
     if (!token) { setError('Please log in first'); return; }
     setLoading(true); setError(''); setSearched(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({
-          min_students: minStudents ? parseInt(minStudents) : null,
-          erp_id: erpId || null, name: name || null, status: status || null
-        })
+      let query = supabase.from('attendance').select('*, lectures!inner(lecture_id, total_students, remark)');
+
+      if (erpId) query = query.ilike('erp_id', `%${erpId}%`);
+      if (name) query = query.ilike('name', `%${name}%`);
+      if (status) query = query.eq('status', status);
+      if (minStudents) query = query.gte('lectures.total_students', parseInt(minStudents));
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Group flat attendance rows by their respective lecture so the UI stays the same
+      const grouped = {};
+      data.forEach(row => {
+        const l_id = row.lecture_id;
+        if (!grouped[l_id]) {
+          grouped[l_id] = {
+            lecture_id: l_id,
+            total_students: row.lectures.total_students,
+            remark: row.lectures.remark,
+            matching_students: [],
+            match_count: 0
+          };
+        }
+        grouped[l_id].matching_students.push({
+          erp_id: row.erp_id,
+          name: row.name,
+          roll_no: row.roll_no,
+          status: row.status
+        });
+        grouped[l_id].match_count += 1;
       });
-      if (!res.ok) throw new Error('Search failed');
-      const data = await res.json();
-      setResults(data.lectures || []);
+
+      setResults(Object.values(grouped));
     } catch (err) { setError(err.message); }
     setLoading(false);
   };
