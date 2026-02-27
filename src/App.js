@@ -60,7 +60,7 @@ export default function LectureFinderApp() {
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
   const [newBranchInput, setNewBranchInput] = useState('');
 
-  const API_BASE_URL = 'https://NZE77-cokefinder.hf.space';
+  const API_BASE_URL = 'https://NZE77-cokefinder1.hf.space';
 
   const availableBranches = React.useMemo(() => {
     const branches = new Set();
